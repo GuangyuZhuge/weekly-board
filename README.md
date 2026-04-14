@@ -1,127 +1,171 @@
-# 周任务看板
+# Weekly Board
 
-一个适合 2-3 人协同的小型项目进度管理网页雏形，功能聚焦：
+一个轻量的周任务看板，面向 1-3 人协作，支持外网访问、手机竖屏浏览、企业微信机器人播报，以及按当前周自动同步。
 
-- 首页展示本周任务
-- 左右按钮切换周
-- 新增任务并选择 1-3 位负责人
-- 按负责人筛选任务
-- 每条任务可勾选“是否完成”
-- 多人访问同一个服务地址时共享同一份任务数据
+仓库地址：`git@github.com:GuangyuZhuge/weekly-board.git`
 
-## 启动方式
+## 当前能力
 
-在项目目录执行：
+- 按周查看任务，顶部日期可点击回到当前周
+- 点击任务列表空白处弹出“发布任务”
+- 点击已有任务弹出“保存任务”并修改标题、日期、负责人、备注
+- 任务列表支持按负责人筛选
+- 任务可直接勾选完成
+- 任务数据多人共享，写入 `data/tasks.json`
+- 新增任务、修改任务、完成状态更新会发企业微信机器人通知
+- 前端只同步当前显示的周，切换周立刻刷新
+- 页面隐藏时暂停自动同步，恢复可见时再继续
+- 已配置 Docker、SakuraFrp、systemd 开机自启
 
-```powershell
-node .\server.js
+## 项目目录
+
+```text
+/home/ZGGY/weekly-board
 ```
 
-启动后访问：`http://localhost:3000`
+## 核心文件
 
-局域网多人协同时，可把 `localhost` 换成启动机器的局域网 IP（示例：`http://192.168.1.8:3000`）。
+- `server.js`：Node HTTP 服务、任务 API、企业微信 webhook
+- `app.js`：前端交互、弹窗、按周自动同步
+- `styles.css`：桌面和手机样式
+- `compose.yaml`：任务看板容器
+- `compose.sakurafrp.yaml`：SakuraFrp 隧道容器
+- `data/tasks.json`：任务持久化数据
+- `deploy/systemd/*.service`：开机自启服务
+- `MAINTENANCE.md`：给后续维护者的维护指南
 
-## Docker 部署
+## 本地运行
 
-如果你要长期运行，建议直接用 Docker：
+直接运行 Node：
 
 ```bash
-docker compose up -d --build
+cd /home/ZGGY/weekly-board
+node server.js
 ```
 
-启动后访问：
-
-- 本机：`http://127.0.0.1:3000`
-- 局域网：`http://你的局域网IP:3000`
-
-停止服务：
-
-```bash
-docker compose down
-```
-
-数据保存在项目目录的 `data/tasks.json`，容器重建后不会丢。
-
-## 部署到外网
-
-这个服务已经监听 `0.0.0.0:3000`，可以直接通过内网穿透映射到公网。推荐两种方式：
-
-### 方式一：Cloudflare Tunnel
-
-适合已有域名并托管到 Cloudflare 的场景。
-
-1. 先启动服务：
-
-```bash
-docker compose up -d --build
-```
-
-2. 在宿主机安装并登录 `cloudflared`
-3. 创建 tunnel，并把公网域名指向本地 `http://127.0.0.1:3000`
-4. 外网访问你的域名即可
-
-核心转发目标填写：
+访问：
 
 ```text
 http://127.0.0.1:3000
 ```
 
-### 方式二：FRP
+## Docker 运行
 
-适合你自己有一台公网 Linux 服务器。
-
-公网服务器 `frps.toml` 示例：
-
-```toml
-bindPort = 7000
+```bash
+cd /home/ZGGY/weekly-board
+docker compose up -d --build
 ```
 
-内网机器 `frpc.toml` 示例：
+查看状态：
 
-```toml
-serverAddr = "你的公网服务器IP"
-serverPort = 7000
-
-[[proxies]]
-name = "task-board"
-type = "tcp"
-localIP = "127.0.0.1"
-localPort = 3000
-remotePort = 3000
+```bash
+docker ps
+docker logs --tail=100 weekly-task-board
 ```
 
-完成后，外网可通过：
+停止：
 
-```text
-http://你的公网服务器IP:3000
+```bash
+docker compose down
 ```
 
-访问该系统。
+## 外网访问
 
-### 安全建议
+当前项目通过 SakuraFrp 暴露到外网。
 
-- 目前项目没有登录鉴权，不建议直接裸露到公网长期使用
-- 如果要长期公网开放，至少加一层访问认证或放在受限的 Cloudflare Access 后面
-- 如需 HTTPS，优先使用 Cloudflare Tunnel 或 Nginx + 证书反代
+启动隧道：
 
-## 文件结构
+```bash
+cd /home/ZGGY/weekly-board
+docker compose -f compose.sakurafrp.yaml up -d
+```
 
-- `index.html`：页面结构
-- `styles.css`：页面样式
-- `app.js`：前端交互和 API 调用
-- `server.js`：静态资源 + 任务 API（无第三方依赖）
-- `data/tasks.json`：任务持久化文件
+查看隧道日志：
 
-## API（简版）
+```bash
+docker logs --tail=100 weekly-task-board-frp
+```
 
-- `GET /api/members`：获取负责人列表
-- `GET /api/tasks`：获取所有任务
-- `POST /api/tasks`：新增任务
-- `PATCH /api/tasks/:id`：更新任务（当前用于切换完成状态）
-- `DELETE /api/tasks/:id`：删除任务
+重启隧道：
 
-## 可继续扩展
+```bash
+docker restart weekly-task-board-frp
+```
 
-- 增加任务状态、优先级、截止时间
-- 支持自定义成员名单与成员管理
-- 增加任务编辑、拖拽调整和权限控制
+## 开机自启
+
+当前使用 `systemd + Docker` 开机自启。
+
+查看状态：
+
+```bash
+systemctl status weekly-task-board.service
+systemctl status weekly-task-board-frp.service
+```
+
+如果修改了 service 文件，重新安装：
+
+```bash
+sudo cp /home/ZGGY/weekly-board/deploy/systemd/weekly-task-board.service /etc/systemd/system/
+sudo cp /home/ZGGY/weekly-board/deploy/systemd/weekly-task-board-frp.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl restart weekly-task-board.service
+sudo systemctl restart weekly-task-board-frp.service
+```
+
+## 企业微信通知
+
+服务端会在以下事件发生时发送企微机器人通知：
+
+- 新增任务
+- 修改任务
+- 完成状态更新
+
+Webhook 配置位置：
+
+- `server.js` 中的 `WEBHOOK_URL`
+
+## 自动同步策略
+
+当前前端同步策略：
+
+- 只同步当前显示的周
+- 切换周时立即刷新
+- 页面隐藏时暂停同步
+- 页面恢复可见时立即同步一次
+- 正在打开弹窗编辑时，不用后台轮询覆盖当前编辑过程
+
+同步频率配置位置：
+
+- `app.js` 中的 `TASK_SYNC_INTERVAL_MS`
+
+## Android 包装
+
+仓库中包含 Android WebView 包装工程：
+
+- `android/`
+
+注意：
+
+- Android `build/` 产物已通过 `.gitignore` 忽略
+- 如果要重新打包 APK，请在 `android/` 工程内按 Gradle 方式构建
+
+## Git 同步
+
+当前仓库已初始化并推送到 GitHub。
+
+常用命令：
+
+```bash
+cd /home/ZGGY/weekly-board
+git status
+git add .
+git commit -m "your message"
+git push
+```
+
+## 维护
+
+更详细的维护入口见：
+
+- `MAINTENANCE.md`

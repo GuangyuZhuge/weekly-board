@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">工作</string>
+    <string name="loading_text">正在连接页面…</string>
+    <string name="loading_progress">加载中 %1$d%%</string>
+    <string name="loading_almost_done">页面即将完成加载…</string>
+    <string name="error_load_title">页面打开失败</string>
+    <string name="error_load_message">当前页面无法加载，请检查链接或网络。</string>
+    <string name="retry">重新加载</string>
+</resources>

@@ -1,0 +1,10 @@
+services:
+  sakurafrp:
+    image: natfrp.com/frpc
+    container_name: weekly-task-board-frp
+    restart: always
+    network_mode: host
+    command:
+      - --disable_log_color
+      - -f
+      - tvowm55zi2tjmscr6qgh7bry3wvxwqtp:26833009

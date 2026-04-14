@@ -1,0 +1,16 @@
+[Unit]
+Description=Weekly Task Board SakuraFRP Docker Compose Stack
+Requires=docker.service weekly-task-board.service
+After=docker.service weekly-task-board.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ZGGY/weekly-board
+ExecStart=/usr/bin/docker compose -f compose.sakurafrp.yaml up -d
+ExecStop=/usr/bin/docker compose -f compose.sakurafrp.yaml down
+RemainAfterExit=yes
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

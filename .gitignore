@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+*.log
+
+data/tasks.json.bak
+
+android/.gradle/
+android/**/build/
+android/local.properties
+
+.idea/
+.vscode/

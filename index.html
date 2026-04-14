@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>周任务看板</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <main class="layout">
+        <section class="board-panel">
+          <div class="toolbar">
+            <div class="week-switcher">
+              <button id="prevWeekBtn" class="nav-btn" type="button" aria-label="上一周">
+                ←
+              </button>
+              <div>
+                <button id="currentWeekBtn" class="week-range-btn is-current-week" type="button">
+                  <span id="weekRangeLabel">--</span>
+                </button>
+              </div>
+              <button id="nextWeekBtn" class="nav-btn" type="button" aria-label="下一周">
+                →
+              </button>
+            </div>
+
+            <div class="filters">
+              <span class="filter-title">按负责人筛选</span>
+              <div id="ownerFilters" class="filter-group"></div>
+            </div>
+          </div>
+
+          <div id="emptyState" class="empty-state" hidden>
+            <h3 id="emptyStateTitle">这一周还没有任务</h3>
+            <p id="emptyStateText">点击下方空白区域即可弹出添加任务页，或者切换到有任务的周。</p>
+          </div>
+
+          <button id="openCreateTaskBtn" class="board-blank-trigger" type="button">
+            点击任务列表空白处，弹出添加任务页
+          </button>
+          <div id="weekBoard" class="week-board" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="taskModal" class="task-modal" hidden>
+      <div id="taskModalBackdrop" class="task-modal-backdrop"></div>
+      <section class="task-modal-panel" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+        <div class="task-modal-head">
+          <div>
+            <p id="taskModalEyebrow" class="section-label">添加任务</p>
+            <h2 id="taskModalTitle">发布任务</h2>
+            <p id="taskModalMeta" class="panel-copy">填写后点击发布。</p>
+          </div>
+          <button id="closeTaskModalBtn" class="modal-close-btn" type="button" aria-label="关闭">×</button>
+        </div>
+
+        <form id="taskModalForm" class="task-form">
+          <label class="field">
+            <span>任务名称</span>
+            <input id="modalTaskTitle" name="title" type="text" maxlength="60" required />
+          </label>
+
+          <label class="field">
+            <span>日期</span>
+            <input id="modalTaskDate" name="date" type="date" required />
+          </label>
+
+          <fieldset id="modalOwnerField" class="field fieldset">
+            <legend>负责人（选择 1-2 人）</legend>
+            <div id="modalOwnerOptions" class="owner-options"></div>
+          </fieldset>
+
+          <label class="field">
+            <span>备注</span>
+            <textarea id="modalTaskNote" name="note" rows="6" maxlength="160"></textarea>
+          </label>
+
+          <button id="taskModalDeleteBtn" class="delete-btn modal-delete-btn" type="button" hidden>
+            删除任务
+          </button>
+          <button id="taskModalSubmitBtn" class="submit-btn" type="submit">发布</button>
+          <p id="taskModalMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </section>
+    </div>
+  </body>
+</html>
